@@ -1,13 +1,18 @@
+### Import necessary modules
 import csv
 
+
+### Take user input for name of CSV file. Append '.csv' to the end. Store in dirty_dataset_name.
+### Slice .csv off dirty_dataset_name. Append '_clean' and store in clean_dataset_name.
 dirty_dataset_name = 'addresses.csv' #input("Enter name of address CSV file: ") + '.csv'
 clean_dataset_name = dirty_dataset_name[:-4] + '_clean'
 
 def file_import():
+    """
+    Open and import CSV file dirty_dataset_name. Returns dirty_list, a list of dictionaries, one for each row.
+    """
     with open(dirty_dataset_name, 'r') as f:
         dirty_list = list(csv.DictReader(f))
-        #for item in dirty_dict:
-        #    print(item)
         return dirty_list
 
 def file_export():
@@ -18,11 +23,20 @@ def file_export():
             address_writer.writerow(address)
 
 def normalize_case():
-    pass
+    for row in dirty_addr_list:
+        for key in row.keys():
+            value = row[key]
+            if key.lower() == 'state':
+                new_value= value.upper()
+            else:
+                new_value = value.title()   #.replace('And', 'and')
+            row.update({key: new_value})
 
-#normalize_case()
+
+
 
 dirty_addr_list = file_import()
 
 
-print(dirty_addr_list)
+normalize_case()
+print(dirty_addr_list)  
