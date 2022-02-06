@@ -29,14 +29,21 @@ def normalize_case():
             if key.lower() == 'state':
                 new_value= value.upper()
             else:
-                new_value = value.title()   #.replace('And', 'and')
+                new_value = value.title().replace(' And ', ' and ')
             row.update({key: new_value})
+
+def remove_list_id():
+    for row in dirty_addr_list:
+        try:
+            del row['Mailing ListID']
+        except:
+            pass
 
 
 
 
 dirty_addr_list = file_import()
 
-
+remove_list_id()
 normalize_case()
-print(dirty_addr_list)  
+print(dirty_addr_list) 
