@@ -1,7 +1,8 @@
 ### Import necessary modules
 import csv
-from googlesearch import search
-import requests
+from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
+
 
 ### Take user input for name of CSV file. Append '.csv' to the end. Store in dirty_dataset_name.
 ### Slice .csv off dirty_dataset_name. Append '_clean' and store in clean_dataset_name.
@@ -52,20 +53,37 @@ def remove_list_id():
         except:
             pass
 
-def search_goog(address):
+def get_url(address, city, state, zipcode):
     """
     Takes address from address_check and searches google for 1 result and stores it in top_result.
     Dumps html from top_result into page_html. Returns string containing all html.
     """
-    page_html = ''
+    query_name = (address.replace(' ', '+') + '+' + city.replace(' ', '+') + '+' + 
+        state) # + '+' + zipcode)
     g_search_url = 'https://www.google.com/search?q='
-    top_result = list(search(address, num_results=1))[0]
-    print(top_result)
-    page_html = requests.get(url = top_result).text
-    return page_html
+    page_url = g_search_url + query_name
+    return page_url
 
-def scrape_html(page):
-    pass
+def scrape_map_title(page_content):
+    soup = BeautifulSoup(page_content, 'html.parser')
+    soup.prettify()
+    map_class = soup.find('div', 'lu_map_section')
+    map_img = map_class.find('img')
+    map_title = map_img.attrs['title']
+    return map_title
+
+def get_dynamic_payload(page_url):
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.goto(page_url)
+        page_content = page.content()
+        browser.close()
+        return page_content
+
+def clean_map_title(map_title):
+    full_address = map_title[7:]
+    return full_address
 
 def address_check():
     """
@@ -74,17 +92,20 @@ def address_check():
     """
     for row in dirty_addr_list:
         if row['Address'] and row ['City']:
-            address = (row['Address'].replace(' ', '+') + '+' + row['City'].replace(' ', '+') + '+' + 
-            row['State'])# + '+' + row['Postal Code'])
-        print(address)
-        #search_results = search_goog(address)
-        #scrape_html(search_results)
+            page_url = get_url(row['Address'], row['City'], row['State'], row['Postal Code'])
+            page_content = get_dynamic_payload(page_url)
+            map_title = scrape_map_title(page_content)
+            print(clean_map_title(map_title))
 
 
+        break
 
 dirty_addr_list = file_import()
 remove_list_id()
 normalize_case()
 address_check()
+
+
+
 
 #print(dirty_addr_list) 
