@@ -67,10 +67,14 @@ def get_url(address, city, state, zipcode):
 def scrape_map_title(page_content):
     soup = BeautifulSoup(page_content, 'html.parser')
     soup.prettify()
-    map_class = soup.find('div', 'lu_map_section')
-    map_img = map_class.find('img')
-    map_title = map_img.attrs['title']
-    return map_title
+    try:
+        map_class = soup.find('div', 'lu_map_section')
+        map_img = map_class.find('img')
+        map_title = map_img.attrs['title']
+        return map_title
+    except AttributeError:
+        return 'address error'
+
 
 def get_dynamic_payload(page_url):
     with sync_playwright() as p:
@@ -93,12 +97,11 @@ def address_check():
     for row in dirty_addr_list:
         if row['Address'] and row ['City']:
             page_url = get_url(row['Address'], row['City'], row['State'], row['Postal Code'])
+            print(page_url)
             page_content = get_dynamic_payload(page_url)
             map_title = scrape_map_title(page_content)
             print(clean_map_title(map_title))
 
-
-        break
 
 dirty_addr_list = file_import()
 remove_list_id()
